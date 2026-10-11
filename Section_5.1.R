@@ -333,7 +333,8 @@ fit.asr <- asreml(fixed = GY ~ -1 + Env,
                             weights = weight, family = asr_gaussian(dispersion = 1.0),
                             data = d, maxit = 50) # -630.7962
 )
-tolLL <- fit.asr$trace[1, ncol(fit.asr$trace) - 1] - fit.asr$trace[1, ncol(fit.asr$trace) - 2] # 0.00114021503077311
+# tolLL <- fit.asr$trace[1, ncol(fit.asr$trace) - 1] - fit.asr$trace[1, ncol(fit.asr$trace) - 2] # 0.00114021503077311
+tolLL <- 0.001
 
 ## kmmr stacked CPU ====
 sv <- kmmr(fixed = GY ~ -1 + Env,
