@@ -40,13 +40,14 @@ sv <- kmmr(fixed = GY ~ -1 + ManEnv,
                       data = d, maxit = 150, getStartingValues = TRUE)
 sv$Init[nrow(sv)] <- 1.0
 sv$Fixed[nrow(sv)] <- TRUE
-
+system.time(
 fit.kmr <- kmmr(fixed = GY ~ -1 + ManEnv,
                                          random = ~ re(~ exfa(ManEnv, 1):lk(Gen, Ki.kmr), vars = ~ ManEnv),
                                          residual = ~ units,
                                          weights = "wt.kmr",
                                          data = d, maxit = 150,
-                                         init = sv$Init, isFixed = sv$Fixed, tolConvLL = tolLL)
+                                         init = sv$Init, isFixed = sv$Fixed, tolConvLL = tolLL, denseThreshold = 0.1)
+)
 
 ## FA3 asreml ====
 fit.asr <- asreml(fixed = GY ~ -1 + ManEnv,
@@ -72,14 +73,14 @@ sv <- kmmr(fixed = GY ~ -1 + ManEnv,
                       data = d, maxit = 150, getStartingValues = TRUE)
 sv$Init[nrow(sv)] <- 1.0
 sv$Fixed[nrow(sv)] <- TRUE
-
+system.time(
 fit.kmr <- kmmr(fixed = GY ~ -1 + ManEnv,
                                          random = ~ re(~ exfa(ManEnv, 3):lk(Gen, Ki.kmr), vars = ~ ManEnv),
                                          residual = ~ units,
                                          weights = "wt.kmr",
                                          data = d, maxit = 150,
-                                         init = sv$Init, isFixed = sv$Fixed, tolConvLL = tolLL)
-
+                                         init = sv$Init, isFixed = sv$Fixed, tolConvLL = tolLL, denseThreshold = 0.1)
+)
 # MVGK fits ====
 rm(list = ls())
 suppressMessages(library(cornfruit))
@@ -119,14 +120,14 @@ sv <- kmmr(fixed = GY ~ -1 + ManEnv,
            getStartingValues = TRUE)
 sv$Init[29:31] <- c(0.8, 0.4, 1.0)
 sv$Fixed[nrow(sv)] <- TRUE
-
+system.time(
 fit.kmr <- kmmr(fixed = GY ~ -1 + ManEnv,
                                          random = ~ re(~ corg(Man):gk(Env, D.kmr):lk(Gen, Ki.kmr), vars = ~ Man:Env),
                                          residual = ~ units,
                                          weights = "wt.kmr",
                                          data = d, maxit = 150,
                                          init = sv$Init, isFixed = sv$Fixed, denseThreshold = 1e-3, tolConvLL = tolLL)
-
+)
 ## MVGK kmmr GPU ====
 sv <- kmmr(fixed = GY ~ -1 + ManEnv,
            random = ~ re(~ corg(Man):gk(Env, D.kmr):lk(Gen, Ki.kmr), vars = ~ Man:Env),
@@ -207,6 +208,7 @@ tolLL <- fit.asr$trace[1, ncol(fit.asr$trace) - 1] - fit.asr$trace[1, ncol(fit.a
 u.asr <- fit.asr$coefficients$random[(nrow(fit.asr$coefficients$random) - ((14 + m) * 246) + 1):(nrow(fit.asr$coefficients$random) - (m * 246)), 1]
 
 ## FA1 kmmr ====
+system.time(
 fit.kmr <- kmmr(fixed = GY ~ -1 + Env,
                                          random = ~ atEach("Env", ~ re(~ id(compBlock), vars = ~ 1)) +
                                            atEach("Env", ~ re(~ id(compBlock):id(incompBlock), vars = ~ 1)) +
@@ -216,7 +218,8 @@ fit.kmr <- kmmr(fixed = GY ~ -1 + Env,
                                          data = dss,
                                          stepSize = c(0.1, 0.2, 0.3, 0.4, 0.5),
                                          avInfReg = rep(1.1, 50),
-                                         maxit = 50, tolConvLL = tolLL)
+                                         maxit = 50, tolConvLL = tolLL, denseThreshold = 0.1)
+)
 u.kmr <- fit.kmr$u[(nrow(fit.kmr$u) - ((14 + m) * 246) + 1):(nrow(fit.kmr$u) - (m * 246)), 1]
 cor(u.asr, u.kmr)
 
@@ -234,6 +237,7 @@ tolLL <- fit.asr$trace[1, ncol(fit.asr$trace) - 1] - fit.asr$trace[1, ncol(fit.a
 u.asr <- fit.asr$coefficients$random[(nrow(fit.asr$coefficients$random) - ((14 + m) * 246) + 1):(nrow(fit.asr$coefficients$random) - (m * 246)), 1]
 
 ## FA3 kmmr ====
+system.time(
 fit.kmr <- kmmr(fixed = GY ~ -1 + Env,
                                          random = ~ atEach("Env", ~ re(~ id(compBlock), vars = ~ 1)) +
                                            atEach("Env", ~ re(~ id(compBlock):id(incompBlock), vars = ~ 1)) +
@@ -243,7 +247,8 @@ fit.kmr <- kmmr(fixed = GY ~ -1 + Env,
                                          data = dss,
                                          stepSize = c(0.1, 0.2, 0.3, 0.4, 0.5),
                                          avInfReg = rep(1.1, 50),
-                                         maxit = 50, tolConvLL = tolLL)
+                                         maxit = 50, tolConvLL = tolLL, denseThreshold = 0.1)
+)
 u.kmr <- fit.kmr$u[(nrow(fit.kmr$u) - ((14 + m) * 246) + 1):(nrow(fit.kmr$u) - (m * 246)), 1]
 cor(u.asr, u.kmr)
 
