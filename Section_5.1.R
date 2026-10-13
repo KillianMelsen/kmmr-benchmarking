@@ -17,20 +17,22 @@ d$wt.kmr <- 1 / d$weight
 # FA1/FA3 fits ====
 Sys.getenv("MKL_NUM_THREADS")
 ## FA1 asreml ====
-fit.asr <- asreml(fixed = GY ~ -1 + ManEnv,
+bm.asr <- microbenchmark(fit.asr <- asreml(fixed = GY ~ -1 + ManEnv,
                                            random = ~ fa(ManEnv, 1):vm(Gen, Ki.asr),
                                            residual = ~ units,
                                            weights = weight, family = asr_gaussian(dispersion = 1.0),
-                                           data = d, maxit = 150)
+                                           data = d, maxit = 150),
+                         times = 5)
 tolLL <- fit.asr$trace[1, ncol(fit.asr$trace) - 1] - fit.asr$trace[1, ncol(fit.asr$trace) - 2]
 
 ## FA1 sommer ====
 W <- Matrix(diag(d$weight))
-fit.smr <- mmes(fixed = GY ~ -1 + ManEnv,
+bm.smr <- microbenchmark(fit.smr <- mmes(fixed = GY ~ -1 + ManEnv,
                                          random = ~ vsm(fam(ManEnv, 1), ism(Gen), Gu = Ki.smr),
                                          rcov = ~ vsm(ism(units), sigma2 = 1, fixedSigma2 = TRUE),
                                          W = W,
-                                         data = d, nIters = 150, tolParConvLL = tolLL)
+                                         data = d, nIters = 150, tolParConvLL = tolLL),
+                         times = 5)
 
 ## FA1 kmmr ====
 sv <- kmmr(fixed = GY ~ -1 + ManEnv,
@@ -40,30 +42,31 @@ sv <- kmmr(fixed = GY ~ -1 + ManEnv,
                       data = d, maxit = 150, getStartingValues = TRUE)
 sv$Init[nrow(sv)] <- 1.0
 sv$Fixed[nrow(sv)] <- TRUE
-system.time(
-fit.kmr <- kmmr(fixed = GY ~ -1 + ManEnv,
+bm.kmr <- microbenchmark(fit.kmr <- kmmr(fixed = GY ~ -1 + ManEnv,
                                          random = ~ re(~ exfa(ManEnv, 1):lk(Gen, Ki.kmr), vars = ~ ManEnv),
                                          residual = ~ units,
                                          weights = "wt.kmr",
                                          data = d, maxit = 150,
-                                         init = sv$Init, isFixed = sv$Fixed, tolConvLL = tolLL, denseThreshold = 0.1)
-)
+                                         init = sv$Init, isFixed = sv$Fixed, tolConvLL = tolLL, denseThreshold = 0.1),
+                         times = 5)
 
 ## FA3 asreml ====
-fit.asr <- asreml(fixed = GY ~ -1 + ManEnv,
+bm.asr <- microbenchmark(fit.asr <- asreml(fixed = GY ~ -1 + ManEnv,
                                            random = ~ fa(ManEnv, 3):vm(Gen, Ki.asr),
                                            residual = ~ units,
                                            weights = weight, family = asr_gaussian(dispersion = 1.0),
-                                           data = d, maxit = 150)
+                                           data = d, maxit = 150),
+                         times = 5)
 tolLL <- fit.asr$trace[1, ncol(fit.asr$trace) - 1] - fit.asr$trace[1, ncol(fit.asr$trace) - 2]
 
 ## FA3 sommer ====
 W <- Matrix(diag(d$weight))
-fit.smr <- mmes(fixed = GY ~ -1 + ManEnv,
+bm.smr <- microbenchmark(fit.smr <- mmes(fixed = GY ~ -1 + ManEnv,
                                          random = ~ vsm(fam(ManEnv, 3), ism(Gen), Gu = Ki.smr),
                                          rcov = ~ vsm(ism(units), sigma2 = 1, fixedSigma2 = TRUE),
                                          W = W,
-                                         data = d, nIters = 150, tolParConvLL = tolLL)
+                                         data = d, nIters = 150, tolParConvLL = tolLL),
+                         times = 5)
 
 ## FA3 kmmr ====
 sv <- kmmr(fixed = GY ~ -1 + ManEnv,
@@ -73,14 +76,14 @@ sv <- kmmr(fixed = GY ~ -1 + ManEnv,
                       data = d, maxit = 150, getStartingValues = TRUE)
 sv$Init[nrow(sv)] <- 1.0
 sv$Fixed[nrow(sv)] <- TRUE
-system.time(
-fit.kmr <- kmmr(fixed = GY ~ -1 + ManEnv,
+bm.kmr <- microbenchmark(fit.kmr <- kmmr(fixed = GY ~ -1 + ManEnv,
                                          random = ~ re(~ exfa(ManEnv, 3):lk(Gen, Ki.kmr), vars = ~ ManEnv),
                                          residual = ~ units,
                                          weights = "wt.kmr",
                                          data = d, maxit = 150,
-                                         init = sv$Init, isFixed = sv$Fixed, tolConvLL = tolLL, denseThreshold = 0.1)
-)
+                                         init = sv$Init, isFixed = sv$Fixed, tolConvLL = tolLL, denseThreshold = 0.1),
+                         times = 5)
+
 # MVGK fits ====
 rm(list = ls())
 suppressMessages(library(cornfruit))
@@ -99,16 +102,19 @@ Ki.kmr <- Matrix(Ki.asr)
 attr(Ki.asr, "INVERSE") <- TRUE
 d$wt.kmr <- 1 / d$weight
 
+Sys.getenv("MKL_NUM_THREADS")
+
 ## MVGK asreml ====
 vf <- cornfruit::mvgk(D.asr)
 init <- c(rep(var(d$GY) / 20, 28), 0.5, 0.1)
 type <- c(rep("V", 28), "R", "V")
 cons <- c(rep("P", 28), "U", "P")
-fit.asr <- asreml(fixed = GY ~ -1 + ManEnv,
+bm.asr <- microbenchmark(fit.asr <- asreml(fixed = GY ~ -1 + ManEnv,
                                            random = ~ own(ManEnv, "vf", init, type, cons):vm(Gen, Ki.asr),
                                            residual = ~ units,
                                            weights = weight, family = asr_gaussian(dispersion = 1.0),
-                                           data = d, maxit = 150)
+                                           data = d, maxit = 150),
+                         times = 5)
 tolLL <- fit.asr$trace[1, ncol(fit.asr$trace) - 1] - fit.asr$trace[1, ncol(fit.asr$trace) - 2] # 0.00114021503077311
 
 ## MVGK kmmr ====
@@ -120,14 +126,14 @@ sv <- kmmr(fixed = GY ~ -1 + ManEnv,
            getStartingValues = TRUE)
 sv$Init[29:31] <- c(0.8, 0.4, 1.0)
 sv$Fixed[nrow(sv)] <- TRUE
-system.time(
-fit.kmr <- kmmr(fixed = GY ~ -1 + ManEnv,
+bm.kmr <- microbenchmark(fit.kmr <- kmmr(fixed = GY ~ -1 + ManEnv,
                                          random = ~ re(~ corg(Man):gk(Env, D.kmr):lk(Gen, Ki.kmr), vars = ~ Man:Env),
                                          residual = ~ units,
                                          weights = "wt.kmr",
                                          data = d, maxit = 150,
-                                         init = sv$Init, isFixed = sv$Fixed, denseThreshold = 1e-3, tolConvLL = tolLL)
-)
+                                         init = sv$Init, isFixed = sv$Fixed, denseThreshold = 1e-3, tolConvLL = tolLL),
+                         times = 5)
+
 ## MVGK kmmr GPU ====
 sv <- kmmr(fixed = GY ~ -1 + ManEnv,
            random = ~ re(~ corg(Man):gk(Env, D.kmr):lk(Gen, Ki.kmr), vars = ~ Man:Env),
@@ -137,13 +143,13 @@ sv <- kmmr(fixed = GY ~ -1 + ManEnv,
            getStartingValues = TRUE)
 sv$Init[29:31] <- c(0.8, 0.4, 1.0)
 sv$Fixed[nrow(sv)] <- TRUE
-
-fit.kmr <- kmmr(fixed = GY ~ -1 + ManEnv,
+bm.kmr <- microbenchmark(fit.kmr <- kmmr(fixed = GY ~ -1 + ManEnv,
                                          random = ~ re(~ corg(Man):gk(Env, D.kmr):lk(Gen, Ki.kmr), vars = ~ Man:Env),
                                          residual = ~ units,
                                          weights = "wt.kmr",
                                          data = d, maxit = 150,
-                                         init = sv$Init, isFixed = sv$Fixed, denseThreshold = 1e-3, tolConvLL = tolLL, useGPU = TRUE)
+                                         init = sv$Init, isFixed = sv$Fixed, denseThreshold = 1e-3, tolConvLL = tolLL, useGPU = TRUE),
+                         times = 5)
 
 # Single stage ====
 rm(list = ls())
@@ -194,22 +200,24 @@ Ki.asr <- solve(K)
 attr(Ki.asr, "INVERSE") <- TRUE
 Ki.kmr <- solve(Matrix(K))
 
+Sys.getenv("MKL_NUM_THREADS")
+
 ## FA1 asreml ====
 m <- 1
-fit.asr <- asreml(GY ~ -1 + Env,
+bm.asr <- microbenchmark(fit.asr <- asreml(GY ~ -1 + Env,
                                            random = ~ at(Env):idv(compBlock) +
                                              at(Env):idv(compBlock):id(incompBlock) +
                                              at(Env):ar1v(Row):ar1(Col) +
                                              fa(Env, m):vm(Gen, Ki.asr),
                                            residual = ~ dsum(~ units | Env),
                                            data = dss,
-                                           maxit = 50)
+                                           maxit = 50),
+                         times = 5)
 tolLL <- fit.asr$trace[1, ncol(fit.asr$trace) - 1] - fit.asr$trace[1, ncol(fit.asr$trace) - 2] # 0.000235635346143681
 u.asr <- fit.asr$coefficients$random[(nrow(fit.asr$coefficients$random) - ((14 + m) * 246) + 1):(nrow(fit.asr$coefficients$random) - (m * 246)), 1]
 
 ## FA1 kmmr ====
-system.time(
-fit.kmr <- kmmr(fixed = GY ~ -1 + Env,
+bm.kmr <- microbenchmark(fit.kmr <- kmmr(fixed = GY ~ -1 + Env,
                                          random = ~ atEach("Env", ~ re(~ id(compBlock), vars = ~ 1)) +
                                            atEach("Env", ~ re(~ id(compBlock):id(incompBlock), vars = ~ 1)) +
                                            atEach("Env", ~ re(~ ar1(Row):ar1(Col), vars = ~ 1)) +
@@ -218,27 +226,27 @@ fit.kmr <- kmmr(fixed = GY ~ -1 + Env,
                                          data = dss,
                                          stepSize = c(0.1, 0.2, 0.3, 0.4, 0.5),
                                          avInfReg = rep(1.1, 50),
-                                         maxit = 50, tolConvLL = tolLL, denseThreshold = 0.1)
-)
+                                         maxit = 50, tolConvLL = tolLL, denseThreshold = 0.1),
+                         times = 5)
 u.kmr <- fit.kmr$u[(nrow(fit.kmr$u) - ((14 + m) * 246) + 1):(nrow(fit.kmr$u) - (m * 246)), 1]
 cor(u.asr, u.kmr)
 
 ## FA3 asreml ====
 m <- 3
-fit.asr <- asreml(GY ~ -1 + Env,
+bm.asr <- microbenchmark(fit.asr <- asreml(GY ~ -1 + Env,
                                            random = ~ at(Env):idv(compBlock) +
                                              at(Env):idv(compBlock):id(incompBlock) +
                                              at(Env):ar1v(Row):ar1(Col) +
                                              fa(Env, m):vm(Gen, Ki.asr),
                                            residual = ~ dsum(~ units | Env),
                                            data = dss,
-                                           maxit = 50)
+                                           maxit = 50),
+                         times = 5)
 tolLL <- fit.asr$trace[1, ncol(fit.asr$trace) - 1] - fit.asr$trace[1, ncol(fit.asr$trace) - 2] #  0.00016432644224551
 u.asr <- fit.asr$coefficients$random[(nrow(fit.asr$coefficients$random) - ((14 + m) * 246) + 1):(nrow(fit.asr$coefficients$random) - (m * 246)), 1]
 
 ## FA3 kmmr ====
-system.time(
-fit.kmr <- kmmr(fixed = GY ~ -1 + Env,
+bm.kmr <- microbenchmark(fit.kmr <- kmmr(fixed = GY ~ -1 + Env,
                                          random = ~ atEach("Env", ~ re(~ id(compBlock), vars = ~ 1)) +
                                            atEach("Env", ~ re(~ id(compBlock):id(incompBlock), vars = ~ 1)) +
                                            atEach("Env", ~ re(~ ar1(Row):ar1(Col), vars = ~ 1)) +
@@ -247,8 +255,8 @@ fit.kmr <- kmmr(fixed = GY ~ -1 + Env,
                                          data = dss,
                                          stepSize = c(0.1, 0.2, 0.3, 0.4, 0.5),
                                          avInfReg = rep(1.1, 50),
-                                         maxit = 50, tolConvLL = tolLL, denseThreshold = 0.1)
-)
+                                         maxit = 50, tolConvLL = tolLL, denseThreshold = 0.1),
+                         times = 5)
 u.kmr <- fit.kmr$u[(nrow(fit.kmr$u) - ((14 + m) * 246) + 1):(nrow(fit.kmr$u) - (m * 246)), 1]
 cor(u.asr, u.kmr)
 
@@ -270,42 +278,51 @@ Ki.asr <- as.matrix(Ki.kmr)
 Ki.smr <- Ki.kmr
 attr(Ki.smr, "inverse") <- TRUE
 attr(Ki.asr, "INVERSE") <- TRUE
+
 Sys.getenv("MKL_NUM_THREADS")
 
 ## asreml ====
-system.time(
-  fit.asr <- asreml(fixed = GY ~ 1,
-                    random = ~ vm(Gen, Ki.asr),
-                    residual = ~ units,
-                    data = d, maxit = 150)
-)
+bm.asr <- microbenchmark(fit.asr <- asreml(fixed = GY ~ 1,
+                                           random = ~ vm(Gen, Ki.asr),
+                                           residual = ~ units,
+                                           data = d, maxit = 150),
+                         times = 5)
 tolLL <- fit.asr$trace[1, ncol(fit.asr$trace) - 1] - fit.asr$trace[1, ncol(fit.asr$trace) - 2] # 0.00141621817601845
 
 ## sommer ====
-system.time(
-  fit.smr <- mmes(fixed = GY ~ 1,
-                  random = ~ vsm(ism(Gen), Gu = Ki.smr),
-                  rcov = ~ units,
-                  data = d, nIters = 150, tolParConvLL = tolLL)
-)
+bm.smr <- microbenchmark(fit.smr <- mmes(fixed = GY ~ 1,
+                                         random = ~ vsm(ism(Gen), Gu = Ki.smr),
+                                         rcov = ~ units,
+                                         data = d, nIters = 150, tolParConvLL = tolLL),
+                         times = 5)
 
 ## kmmr ====
+bm.kmr <- microbenchmark(fit.kmr <- kmmr(fixed = GY ~ 1,
+                                         random = ~ re(~ lk(Gen, Ki.kmr), vars = ~ 1),
+                                         residual = ~ units,
+                                         data = d, maxit = 150, tolConvLL = tolLL),
+                         times = 5)
+
 attr(Ki.kmr, "logDet") <- NULL
-system.time(
-  fit.kmr <- kmmr(fixed = GY ~ 1,
-                  random = ~ re(~ lk(Gen, Ki.kmr), vars = ~ 1),
-                  residual = ~ units,
-                  data = d, maxit = 150, tolConvLL = tolLL)
-)
+bm.kmr <- microbenchmark(fit.kmr <- kmmr(fixed = GY ~ 1,
+                                         random = ~ re(~ lk(Gen, Ki.kmr), vars = ~ 1),
+                                         residual = ~ units,
+                                         data = d, maxit = 150, tolConvLL = tolLL),
+                         times = 5)
 
 ## kmmr GPU ====
+bm.kmr <- microbenchmark(fit.kmr <- kmmr(fixed = GY ~ 1,
+                                         random = ~ re(~ lk(Gen, Ki.kmr), vars = ~ 1),
+                                         residual = ~ units,
+                                         data = d, maxit = 150, tolConvLL = tolLL, useGPU = TRUE),
+                         times = 5)
+
 attr(Ki.kmr, "logDet") <- NULL
-system.time(
-  fit.kmr <- kmmr(fixed = GY ~ 1,
-                  random = ~ re(~ lk(Gen, Ki.kmr), vars = ~ 1),
-                  residual = ~ units,
-                  data = d, maxit = 150, tolConvLL = tolLL, useGPU = TRUE)
-)
+bm.kmr <- microbenchmark(fit.kmr <- kmmr(fixed = GY ~ 1,
+                                         random = ~ re(~ lk(Gen, Ki.kmr), vars = ~ 1),
+                                         residual = ~ units,
+                                         data = d, maxit = 150, tolConvLL = tolLL, useGPU = TRUE),
+                         times = 5)
 
 # DROPS stacking ====
 rm(list = ls())
@@ -326,18 +343,19 @@ Ki.kmr <- Matrix(Ki.asr)
 attr(Ki.asr, "INVERSE") <- TRUE
 d$wt.kmr <- 1 / d$weight
 
+Sys.getenv("MKL_NUM_THREADS")
+
 ## MVGK + exfa asreml ====
 vf <- cornfruit::mvgk(D.asr)
 init <- c(rep(var(d$GY) / 20, 14), 0.1)
 type <- c(rep("V", 14), "V")
 cons <- c(rep("P", 14), "P")
-system.time(
-fit.asr <- asreml(fixed = GY ~ -1 + Env,
-                            random = ~ own(Env, "vf", init, type, cons):vm(Gen, Ki.asr) + fa(Env, 2):vm(Gen, Ki.asr),
-                            residual = ~ units,
-                            weights = weight, family = asr_gaussian(dispersion = 1.0),
-                            data = d, maxit = 50) # -630.7962
-)
+bm.asr <- microbenchmark(fit.asr <- asreml(fixed = GY ~ -1 + Env,
+                                           random = ~ own(Env, "vf", init, type, cons):vm(Gen, Ki.asr) + fa(Env, 2):vm(Gen, Ki.asr),
+                                           residual = ~ units,
+                                           weights = weight, family = asr_gaussian(dispersion = 1.0),
+                                           data = d, maxit = 50), # -630.7962,
+                         times = 5)
 # tolLL <- fit.asr$trace[1, ncol(fit.asr$trace) - 1] - fit.asr$trace[1, ncol(fit.asr$trace) - 2] # 0.00114021503077311
 tolLL <- 0.001
 
@@ -351,18 +369,14 @@ sv <- kmmr(fixed = GY ~ -1 + Env,
 sv$Init[58] <- 1.0
 sv$Fixed[nrow(sv)] <- TRUE
 
-system.time(
-  
-fit.kmr <- kmmr(fixed = GY ~ -1 + Env,
-                random = ~ re(~ stack(~ gk(Env, D.kmr) + fa(Env, 2)):lk(Gen, Ki.kmr), vars = ~ Env),
-                residual = ~ units,
-                weights = "wt.kmr",
-                data = d, maxit = 150,
-                init = sv$Init, isFixed = sv$Fixed, tolConvLL = tolLL,
-                avInfReg = rep(1.1, 150), denseThreshold = 1e-3, useGPU = FALSE)
-
-)
-
+bm.kmr <- microbenchmark(fit.kmr <- kmmr(fixed = GY ~ -1 + Env,
+                                         random = ~ re(~ stack(~ gk(Env, D.kmr) + fa(Env, 2)):lk(Gen, Ki.kmr), vars = ~ Env),
+                                         residual = ~ units,
+                                         weights = "wt.kmr",
+                                         data = d, maxit = 150,
+                                         init = sv$Init, isFixed = sv$Fixed, tolConvLL = tolLL,
+                                         avInfReg = rep(1.1, 150), denseThreshold = 1e-3, useGPU = FALSE),
+                         times = 5)
 u.asr <- fit.asr$coefficients$random[1:(2*3276),1]
 u.kmr <- fit.kmr$u@x
 u.asr.stack <- u.asr[1:3276] + u.asr[3277:(2*3276)]
@@ -378,16 +392,14 @@ sv <- kmmr(fixed = GY ~ -1 + Env,
 sv$Init[58] <- 1.0
 sv$Fixed[nrow(sv)] <- TRUE
 
-system.time(
-  fit.kmr <- kmmr(fixed = GY ~ -1 + Env,
-                  random = ~ re(~ stack(~ gk(Env, D.kmr) + fa(Env, 2)):lk(Gen, Ki.kmr), vars = ~ Env),
-                  residual = ~ units,
-                  weights = "wt.kmr",
-                  data = d, maxit = 150,
-                  init = sv$Init, isFixed = sv$Fixed, tolConvLL = tolLL,
-                  avInfReg = rep(1.1, 150), denseThreshold = 1e-3, useGPU = TRUE)
-)
-
+bm.kmr <- microbenchmark(fit.kmr <- kmmr(fixed = GY ~ -1 + Env,
+                                         random = ~ re(~ stack(~ gk(Env, D.kmr) + fa(Env, 2)):lk(Gen, Ki.kmr), vars = ~ Env),
+                                         residual = ~ units,
+                                         weights = "wt.kmr",
+                                         data = d, maxit = 150,
+                                         init = sv$Init, isFixed = sv$Fixed, tolConvLL = tolLL,
+                                         avInfReg = rep(1.1, 150), denseThreshold = 1e-3, useGPU = TRUE),
+                         times = 5)
 u.asr <- fit.asr$coefficients$random[1:(2*3276),1]
 u.kmr <- fit.kmr$u@x
 u.asr.stack <- u.asr[1:3276] + u.asr[3277:(2*3276)]
@@ -439,45 +451,32 @@ attr(Ki, "logDet") <- -1 * sum(log(eigen(Ki)$values))
 dss$ManEnv <- as.factor(paste(as.character(dss$Man), as.character(dss$Env), sep = ":"))
 dss$Man <- as.factor(dss$Man)
 
+Sys.getenv("MKL_NUM_THREADS")
+
 ## kmmr CPU ====
-system.time(
-  fit.kmmr <- kmmr(fixed = GY ~ -1 + ManEnv,
-                   random = ~ atEach("ManEnv", ~ re(~ id(compBlock), vars = ~ 1)) +
-                              atEach("ManEnv", ~ re(~ id(compBlock):id(incompBlock), vars = ~ 1)) +
-                              atEach("ManEnv", ~ re(~ ar1(Row):ar1(Col), vars = ~ 1)) +
-                              re(~ corg(Man):gk(Env, D):lk(Gen, Ki), vars = ~ Man:Env),
-                   residual = ~ re(~ id(Man):id(Env):id(Gen):id(Rep), vars = ~ Man:Env),
-                   data = dss,
-                   stepSize = c(0.1, 0.2, 0.3, 0.4, 0.5),
-                   avInfReg = rep(1.1, 50),
-                   maxit = 50, timing = F, useGPU = F)
-)
+bm.kmr <- microbenchmark(fit.kmmr <- kmmr(fixed = GY ~ -1 + ManEnv,
+                                          random = ~ atEach("ManEnv", ~ re(~ id(compBlock), vars = ~ 1)) +
+                                            atEach("ManEnv", ~ re(~ id(compBlock):id(incompBlock), vars = ~ 1)) +
+                                            atEach("ManEnv", ~ re(~ ar1(Row):ar1(Col), vars = ~ 1)) +
+                                            re(~ corg(Man):gk(Env, D):lk(Gen, Ki), vars = ~ Man:Env),
+                                          residual = ~ re(~ id(Man):id(Env):id(Gen):id(Rep), vars = ~ Man:Env),
+                                          data = dss,
+                                          stepSize = c(0.1, 0.2, 0.3, 0.4, 0.5),
+                                          avInfReg = rep(1.1, 50),
+                                          maxit = 50, timing = F, useGPU = F),
+                         times = 5)
 
 ## kmmr GPU ====
-system.time(
-  fit.kmmr <- kmmr(fixed = GY ~ -1 + ManEnv,
-                   random = ~ atEach("ManEnv", ~ re(~ id(compBlock), vars = ~ 1)) +
-                     atEach("ManEnv", ~ re(~ id(compBlock):id(incompBlock), vars = ~ 1)) +
-                     atEach("ManEnv", ~ re(~ ar1(Row):ar1(Col), vars = ~ 1)) +
-                     re(~ corg(Man):gk(Env, D):lk(Gen, Ki), vars = ~ Man:Env),
-                   residual = ~ re(~ id(Man):id(Env):id(Gen):id(Rep), vars = ~ Man:Env),
-                   data = dss,
-                   stepSize = c(0.1, 0.2, 0.3, 0.4, 0.5),
-                   avInfReg = rep(1.1, 50),
-                   maxit = 50, timing = F, useGPU = T)
-)
-
-
-
-
-
-
-
-
-
-
-
-
-
+bm.kmr <- microbenchmark(fit.kmmr <- kmmr(fixed = GY ~ -1 + ManEnv,
+                                          random = ~ atEach("ManEnv", ~ re(~ id(compBlock), vars = ~ 1)) +
+                                            atEach("ManEnv", ~ re(~ id(compBlock):id(incompBlock), vars = ~ 1)) +
+                                            atEach("ManEnv", ~ re(~ ar1(Row):ar1(Col), vars = ~ 1)) +
+                                            re(~ corg(Man):gk(Env, D):lk(Gen, Ki), vars = ~ Man:Env),
+                                          residual = ~ re(~ id(Man):id(Env):id(Gen):id(Rep), vars = ~ Man:Env),
+                                          data = dss,
+                                          stepSize = c(0.1, 0.2, 0.3, 0.4, 0.5),
+                                          avInfReg = rep(1.1, 50),
+                                          maxit = 50, timing = F, useGPU = T),
+                         times = 5)
 
 
