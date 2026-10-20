@@ -7,12 +7,11 @@ suppressMessages(library(microbenchmark))
 asreml.options(workspace = "5000mb")
 
 # Loading data:
-d <- readRDS("data/DROPS_weights.rds")
-Ki.asr <- solve(readRDS("data/DROPS_K.rds")[levels(d$Gen), levels(d$Gen)])
+d <- readRDS("~/repos/kmmr-benchmarking/data/DROPS_weights.rds")
+Ki.asr <- solve(readRDS("~/repos/kmmr-benchmarking/data/DROPS_K.rds")[levels(d$Gen), levels(d$Gen)])
 Ki.smr <- Ki.kmr <- Matrix(Ki.asr)
 attr(Ki.asr, "INVERSE") <- TRUE
 attr(Ki.smr, "inverse") <- TRUE
-d$wt.kmr <- 1 / d$weight
 
 # FA1/FA3 fits ====
 Sys.getenv("MKL_NUM_THREADS")
@@ -38,14 +37,14 @@ bm.smr <- microbenchmark(fit.smr <- mmes(fixed = GY ~ -1 + ManEnv,
 sv <- kmmr(fixed = GY ~ -1 + ManEnv,
                       random = ~ re(~ exfa(ManEnv, 1):lk(Gen, Ki.kmr), vars = ~ ManEnv),
                       residual = ~ units,
-                      weights = "wt.kmr",
+                      weights = "weight",
                       data = d, maxit = 150, getStartingValues = TRUE)
 sv$Init[nrow(sv)] <- 1.0
 sv$Fixed[nrow(sv)] <- TRUE
 bm.kmr <- microbenchmark(fit.kmr <- kmmr(fixed = GY ~ -1 + ManEnv,
                                          random = ~ re(~ exfa(ManEnv, 1):lk(Gen, Ki.kmr), vars = ~ ManEnv),
                                          residual = ~ units,
-                                         weights = "wt.kmr",
+                                         weights = "weight",
                                          data = d, maxit = 150,
                                          init = sv$Init, isFixed = sv$Fixed, tolConvLL = tolLL, denseThreshold = 0.1),
                          times = 5)
@@ -72,14 +71,14 @@ bm.smr <- microbenchmark(fit.smr <- mmes(fixed = GY ~ -1 + ManEnv,
 sv <- kmmr(fixed = GY ~ -1 + ManEnv,
                       random = ~ re(~ exfa(ManEnv, 3):lk(Gen, Ki.kmr), vars = ~ ManEnv),
                       residual = ~ units,
-                      weights = "wt.kmr",
+                      weights = "weight",
                       data = d, maxit = 150, getStartingValues = TRUE)
 sv$Init[nrow(sv)] <- 1.0
 sv$Fixed[nrow(sv)] <- TRUE
 bm.kmr <- microbenchmark(fit.kmr <- kmmr(fixed = GY ~ -1 + ManEnv,
                                          random = ~ re(~ exfa(ManEnv, 3):lk(Gen, Ki.kmr), vars = ~ ManEnv),
                                          residual = ~ units,
-                                         weights = "wt.kmr",
+                                         weights = "weight",
                                          data = d, maxit = 150,
                                          init = sv$Init, isFixed = sv$Fixed, tolConvLL = tolLL, denseThreshold = 0.1),
                          times = 5)
@@ -100,7 +99,6 @@ D.kmr <- Matrix(D.asr)
 Ki.asr <- solve(readRDS("data/DROPS_K.rds")[levels(d$Gen), levels(d$Gen)])
 Ki.kmr <- Matrix(Ki.asr)
 attr(Ki.asr, "INVERSE") <- TRUE
-d$wt.kmr <- 1 / d$weight
 
 Sys.getenv("MKL_NUM_THREADS")
 
@@ -121,7 +119,7 @@ tolLL <- fit.asr$trace[1, ncol(fit.asr$trace) - 1] - fit.asr$trace[1, ncol(fit.a
 sv <- kmmr(fixed = GY ~ -1 + ManEnv,
            random = ~ re(~ corg(Man):gk(Env, D.kmr):lk(Gen, Ki.kmr), vars = ~ Man:Env),
            residual = ~ units,
-           weights = "wt.kmr",
+           weights = "weight",
            data = d, maxit = 150,
            getStartingValues = TRUE)
 sv$Init[29:31] <- c(0.8, 0.4, 1.0)
@@ -129,7 +127,7 @@ sv$Fixed[nrow(sv)] <- TRUE
 bm.kmr <- microbenchmark(fit.kmr <- kmmr(fixed = GY ~ -1 + ManEnv,
                                          random = ~ re(~ corg(Man):gk(Env, D.kmr):lk(Gen, Ki.kmr), vars = ~ Man:Env),
                                          residual = ~ units,
-                                         weights = "wt.kmr",
+                                         weights = "weight",
                                          data = d, maxit = 150,
                                          init = sv$Init, isFixed = sv$Fixed, denseThreshold = 1e-3, tolConvLL = tolLL),
                          times = 5)
@@ -138,7 +136,7 @@ bm.kmr <- microbenchmark(fit.kmr <- kmmr(fixed = GY ~ -1 + ManEnv,
 sv <- kmmr(fixed = GY ~ -1 + ManEnv,
            random = ~ re(~ corg(Man):gk(Env, D.kmr):lk(Gen, Ki.kmr), vars = ~ Man:Env),
            residual = ~ units,
-           weights = "wt.kmr",
+           weights = "weight",
            data = d, maxit = 150,
            getStartingValues = TRUE)
 sv$Init[29:31] <- c(0.8, 0.4, 1.0)
@@ -146,7 +144,7 @@ sv$Fixed[nrow(sv)] <- TRUE
 bm.kmr <- microbenchmark(fit.kmr <- kmmr(fixed = GY ~ -1 + ManEnv,
                                          random = ~ re(~ corg(Man):gk(Env, D.kmr):lk(Gen, Ki.kmr), vars = ~ Man:Env),
                                          residual = ~ units,
-                                         weights = "wt.kmr",
+                                         weights = "weight",
                                          data = d, maxit = 150,
                                          init = sv$Init, isFixed = sv$Fixed, denseThreshold = 1e-3, tolConvLL = tolLL, useGPU = TRUE),
                          times = 5)
@@ -341,7 +339,6 @@ D.kmr <- Matrix(D.asr)
 Ki.asr <- solve(readRDS("data/DROPS_K.rds")[levels(d$Gen), levels(d$Gen)])
 Ki.kmr <- Matrix(Ki.asr)
 attr(Ki.asr, "INVERSE") <- TRUE
-d$wt.kmr <- 1 / d$weight
 
 Sys.getenv("MKL_NUM_THREADS")
 
@@ -363,7 +360,7 @@ tolLL <- 0.001
 sv <- kmmr(fixed = GY ~ -1 + Env,
                 random = ~ re(~ stack(~ gk(Env, D.kmr) + fa(Env, 2)):lk(Gen, Ki.kmr), vars = ~ Env),
                 residual = ~ units,
-                weights = "wt.kmr",
+                weights = "weight",
                 data = d, maxit = 150,
                 getStartingValues = TRUE)
 sv$Init[58] <- 1.0
@@ -372,7 +369,7 @@ sv$Fixed[nrow(sv)] <- TRUE
 bm.kmr <- microbenchmark(fit.kmr <- kmmr(fixed = GY ~ -1 + Env,
                                          random = ~ re(~ stack(~ gk(Env, D.kmr) + fa(Env, 2)):lk(Gen, Ki.kmr), vars = ~ Env),
                                          residual = ~ units,
-                                         weights = "wt.kmr",
+                                         weights = "weight",
                                          data = d, maxit = 150,
                                          init = sv$Init, isFixed = sv$Fixed, tolConvLL = tolLL,
                                          avInfReg = rep(1.1, 150), denseThreshold = 1e-3, useGPU = FALSE),
@@ -386,7 +383,7 @@ cor(u.asr.stack, u.kmr)
 sv <- kmmr(fixed = GY ~ -1 + Env,
            random = ~ re(~ stack(~ gk(Env, D.kmr) + fa(Env, 2)):lk(Gen, Ki.kmr), vars = ~ Env),
            residual = ~ units,
-           weights = "wt.kmr",
+           weights = "weight",
            data = d, maxit = 150,
            getStartingValues = TRUE)
 sv$Init[58] <- 1.0
@@ -395,7 +392,7 @@ sv$Fixed[nrow(sv)] <- TRUE
 bm.kmr <- microbenchmark(fit.kmr <- kmmr(fixed = GY ~ -1 + Env,
                                          random = ~ re(~ stack(~ gk(Env, D.kmr) + fa(Env, 2)):lk(Gen, Ki.kmr), vars = ~ Env),
                                          residual = ~ units,
-                                         weights = "wt.kmr",
+                                         weights = "weight",
                                          data = d, maxit = 150,
                                          init = sv$Init, isFixed = sv$Fixed, tolConvLL = tolLL,
                                          avInfReg = rep(1.1, 150), denseThreshold = 1e-3, useGPU = TRUE),
