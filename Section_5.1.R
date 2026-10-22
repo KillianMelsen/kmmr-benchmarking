@@ -122,7 +122,7 @@ sv <- kmmr(fixed = GY ~ -1 + ManEnv,
            weights = "weight",
            data = d, maxit = 150,
            getStartingValues = TRUE)
-sv$Init[29:31] <- c(0.8, 0.4, 1.0)
+sv$Init[31] <- 1.0
 sv$Fixed[nrow(sv)] <- TRUE
 bm.kmr <- microbenchmark(fit.kmr <- kmmr(fixed = GY ~ -1 + ManEnv,
                                          random = ~ re(~ corg(Man):gk(Env, D.kmr):lk(Gen, Ki.kmr), vars = ~ Man:Env),
@@ -139,7 +139,7 @@ sv <- kmmr(fixed = GY ~ -1 + ManEnv,
            weights = "weight",
            data = d, maxit = 150,
            getStartingValues = TRUE)
-sv$Init[29:31] <- c(0.8, 0.4, 1.0)
+sv$Init[31] <- 1.0
 sv$Fixed[nrow(sv)] <- TRUE
 bm.kmr <- microbenchmark(fit.kmr <- kmmr(fixed = GY ~ -1 + ManEnv,
                                          random = ~ re(~ corg(Man):gk(Env, D.kmr):lk(Gen, Ki.kmr), vars = ~ Man:Env),
